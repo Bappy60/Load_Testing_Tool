@@ -14,14 +14,14 @@ services:
       - db_data:/var/lib/mysql
       - ./sql_scripts:/docker-entrypoint-initdb.d
 
-  # redis:
-  #   image: redis:7.0.10
-  #   container_name: redis
-  #   restart: always
-  #   env_file:
-  #     - prod.env
-  #   ports:
-  #     - "6379:6379"
+  redis:
+    image: redis:7.0.10
+    container_name: redis
+    restart: always
+    env_file:
+      - app.env
+    ports:
+      - "6379:6379"
       
   book-store:
     build: .
@@ -32,10 +32,10 @@ services:
       - app.env
     depends_on:
       - mysql
-      # - redis
+      - redis
     links:
       - mysql
-      # - redis
+      - redis
 
 volumes:
   db_data:

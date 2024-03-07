@@ -22,6 +22,8 @@ func Serve() {
 	bookService := services.BookServiceInstance(bookRepo,redisClient)
 	bookController := controllers.BookControllerInstance(bookService)
 
+	services.PopulateBookCacheMap(bookRepo)
+
 	authorRepo := repositories.AuthorDBInstance(db)
 	authorService := services.AuthorServiceInstance(authorRepo)
 	authorController := controllers.AuthorControllerInstance(authorService)
