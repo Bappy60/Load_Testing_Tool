@@ -140,3 +140,77 @@ func (bookController *BookController) DeleteBook(w http.ResponseWriter, r *http.
 	w.WriteHeader(http.StatusAccepted)
 	w.Write([]byte(msg))
 }
+
+
+
+func (bookController *BookController) GetBookFromRedis(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	bookId := r.URL.Query().Get("bookId")
+	bookName := r.URL.Query().Get("bookName")
+	numOfPages := r.URL.Query().Get("number_of_pages")
+	authorID := r.URL.Query().Get("author_id")
+	publication := r.URL.Query().Get("publication")
+	publicationYear := r.URL.Query().Get("publication_year")
+
+	reqStruc := types.BookReqStruc{
+		ID:              bookId,
+		Name:            bookName,
+		NumberOfPages:   numOfPages,
+		AuthorID:        authorID,
+		Publication:     publication,
+		PublicationYear: publicationYear,
+	}
+
+	newBooks, err := bookController.bookService.GetBooks(&reqStruc)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	res, err := json.Marshal(newBooks)
+	if err != nil {
+		http.Error(w, "Error While Marshaling", http.StatusNotAcceptable)
+		return
+	}
+	if len(newBooks) == 0 {
+		http.Error(w, "no book registered ", http.StatusOK)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
+}
+
+func (bookController *BookController) GetBookFromMap(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	bookId := r.URL.Query().Get("bookId")
+	bookName := r.URL.Query().Get("bookName")
+	numOfPages := r.URL.Query().Get("number_of_pages")
+	authorID := r.URL.Query().Get("author_id")
+	publication := r.URL.Query().Get("publication")
+	publicationYear := r.URL.Query().Get("publication_year")
+
+	reqStruc := types.BookReqStruc{
+		ID:              bookId,
+		Name:            bookName,
+		NumberOfPages:   numOfPages,
+		AuthorID:        authorID,
+		Publication:     publication,
+		PublicationYear: publicationYear,
+	}
+
+	newBooks, err := bookController.bookService.GetBooks(&reqStruc)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	res, err := json.Marshal(newBooks)
+	if err != nil {
+		http.Error(w, "Error While Marshaling", http.StatusNotAcceptable)
+		return
+	}
+	if len(newBooks) == 0 {
+		http.Error(w, "no book registered ", http.StatusOK)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
+}

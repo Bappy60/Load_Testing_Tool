@@ -2,6 +2,7 @@ package connection
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Bappy60/BookStore_in_Go/pkg/config"
 	"github.com/Bappy60/BookStore_in_Go/pkg/models"
@@ -12,11 +13,11 @@ import (
 var DB *gorm.DB
 
 func Connect() {
+	time.Sleep(1000 * time.Millisecond)
 	config := config.GConfig
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-	config.DBUser, config.DBPass, config.DBHost, config.DBPort, config.DbName)
+		config.DBUser, config.DBPass, config.DBHost, config.DBPort, config.DbName)
 
-	fmt.Println(connectionString)
 	d, err := gorm.Open("mysql", connectionString)
 	if err != nil {
 		panic(err.Error())

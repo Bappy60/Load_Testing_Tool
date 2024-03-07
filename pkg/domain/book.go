@@ -11,6 +11,10 @@ type IBookController interface{
 	CreateBook(w http.ResponseWriter, r *http.Request)
 	UpdateBook(w http.ResponseWriter, r *http.Request)
 	DeleteBook(w http.ResponseWriter, r *http.Request)
+	GetBookFromRedis(w http.ResponseWriter, r *http.Request)
+	GetBookFromMap(w http.ResponseWriter, r *http.Request)
+
+
 }
 
 type  IBookService  interface{

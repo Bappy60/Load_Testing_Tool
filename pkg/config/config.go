@@ -14,11 +14,15 @@ type Config struct {
 	DBHost string `mapstructure:"DBHOST"`
 	DbName string `mapstructure:"DBNAME"`
 	DBPort string `mapstructure:"DBPORT"`
+	SECRET_KEY string `mapstructure:"SECRET_KEY"`
+	REDIS_HOST string `mapstructure:"REDIS_HOST"`
+	REDIS_PORT string `mapstructure:"REDIS_PORT"`
+	REDIS_PASS string `mapstructure:"REDIS_PASS"`
 }
 
 func InitConfig() *Config {
 
-	viper.AddConfigPath("/home/vivasoft/bappy/goProjects/Load_Testing_Tool-main")
+	viper.AddConfigPath("/app")
 
 	viper.SetConfigName("app")
 	viper.SetConfigType("env")

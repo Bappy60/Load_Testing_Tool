@@ -16,9 +16,10 @@ import (
 func Serve() {
 	config.SetConfig()
 	var db = connection.Initialize()
+	redisClient:= connection.Redis()
 
 	bookRepo := repositories.BookDBInstance(db)
-	bookService := services.BookServiceInstance(bookRepo)
+	bookService := services.BookServiceInstance(bookRepo,redisClient)
 	bookController := controllers.BookControllerInstance(bookService)
 
 	authorRepo := repositories.AuthorDBInstance(db)
@@ -27,9 +28,18 @@ func Serve() {
 
 	log.Println("Database Connected...")
 	r := mux.NewRouter()
+
+	// Health Check Endpoint
+	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
+	// Registering Routes
 	routes.AuthorRoutes(r, authorController)
-	routes.BookRoutes(r,bookController)
-	http.Handle("/", r)
+	routes.BookRoutes(r, bookController)
+
+	// HTTP Server
 	log.Println("Server Started...")
-	log.Fatal(http.ListenAndServe("localhost:9010", r))
+	log.Fatal(http.ListenAndServe(":9011", r))
 }
