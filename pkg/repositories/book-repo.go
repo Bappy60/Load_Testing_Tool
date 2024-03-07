@@ -18,6 +18,13 @@ func BookDBInstance(d *gorm.DB) domain.IBookRepo {
 		db: d,
 	}
 }
+func (repo *bookRepo) GetAllBooks() ([]models.Book, error){
+	var Books []models.Book
+
+	query := repo.db.Model(&models.Book{}).Preload("Author")
+	query.Find(&Books)
+	return Books, nil
+}
 
 func (repo *bookRepo) GetBooks(filterStruct *types.FilterBookStruc) ([]models.Book, error) {
 	var Books []models.Book

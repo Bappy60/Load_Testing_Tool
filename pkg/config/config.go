@@ -9,11 +9,11 @@ import (
 var GConfig *Config
 
 type Config struct {
-	DBUser string `mapstructure:"DBUSER"`
-	DBPass string `mapstructure:"DBPASS"`
-	DBHost string `mapstructure:"DBHOST"`
-	DbName string `mapstructure:"DBNAME"`
-	DBPort string `mapstructure:"DBPORT"`
+	DBUser     string `mapstructure:"DBUSER"`
+	DBPass     string `mapstructure:"DBPASS"`
+	DBHost     string `mapstructure:"DBHOST"`
+	DbName     string `mapstructure:"DBNAME"`
+	DBPort     string `mapstructure:"DBPORT"`
 	SECRET_KEY string `mapstructure:"SECRET_KEY"`
 	REDIS_HOST string `mapstructure:"REDIS_HOST"`
 	REDIS_PORT string `mapstructure:"REDIS_PORT"`

@@ -156,8 +156,8 @@ var bookCacheMap sync.Map
 
 // Function to populate the map with books from the database
 func PopulateBookCacheMap(repo domain.IBookRepo) {
-	fbook := &types.FilterBookStruc{}
-	books, err := repo.GetBooks(fbook)
+
+	books, err := repo.GetAllBooks()
 	if err != nil {
 		fmt.Println("Error loading books into cache:", err)
 		return

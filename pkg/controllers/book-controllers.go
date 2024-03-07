@@ -11,9 +11,9 @@ import (
 
 // var BookService domain.IBookService
 
-// func SetBookService(bService domain.IBookService) {
-// 	BookService = bService
-// }
+//	func SetBookService(bService domain.IBookService) {
+//		BookService = bService
+//	}
 type BookController struct {
 	bookService domain.IBookService
 }
@@ -25,6 +25,7 @@ func BookControllerInstance(bookService domain.IBookService) domain.IBookControl
 }
 
 func (bookController *BookController) GetBook(w http.ResponseWriter, r *http.Request) {
+
 	w.Header().Set("Content-Type", "application/json")
 	bookId := r.URL.Query().Get("bookId")
 	bookName := r.URL.Query().Get("bookName")
@@ -140,8 +141,6 @@ func (bookController *BookController) DeleteBook(w http.ResponseWriter, r *http.
 	w.WriteHeader(http.StatusAccepted)
 	w.Write([]byte(msg))
 }
-
-
 
 func (bookController *BookController) GetBookFromRedis(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")

@@ -24,6 +24,7 @@ type  IBookService  interface{
 	DeleteBook(bookID string) (string, error)
 }
 type  IBookRepo interface{
+	GetAllBooks() ([]models.Book, error)
 	GetBooks(filterStruct *types.FilterBookStruc) ([]models.Book,error)
 	CreateBook(book *types.CreateBookStruc) (*models.Book,error)
 	UpdateBook(book *models.Book) (*models.Book,error)

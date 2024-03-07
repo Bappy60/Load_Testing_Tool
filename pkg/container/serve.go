@@ -16,13 +16,11 @@ import (
 func Serve() {
 	config.SetConfig()
 	var db = connection.Initialize()
-	redisClient:= connection.Redis()
+	redisClient := connection.Redis()
 
 	bookRepo := repositories.BookDBInstance(db)
-	bookService := services.BookServiceInstance(bookRepo,redisClient)
+	bookService := services.BookServiceInstance(bookRepo, redisClient)
 	bookController := controllers.BookControllerInstance(bookService)
-
-	services.PopulateBookCacheMap(bookRepo)
 
 	authorRepo := repositories.AuthorDBInstance(db)
 	authorService := services.AuthorServiceInstance(authorRepo)
@@ -31,6 +29,7 @@ func Serve() {
 	log.Println("Database Connected...")
 	r := mux.NewRouter()
 
+	services.PopulateBookCacheMap(bookRepo)
 	// Health Check Endpoint
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

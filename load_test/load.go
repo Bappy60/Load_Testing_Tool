@@ -7,108 +7,118 @@ import (
 	"time"
 )
 
-func worker(url string, results chan<- time.Duration, errors chan<- error, RequestPerWorker int, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	startTime := time.Now()
-	for i := 0; i < RequestPerWorker; i++ {
-		resp, err := http.Get(url)
-		if err != nil {
-			errors <- err
-			fmt.Println(err)
-			return
-		}
-		defer resp.Body.Close()
-	}
-
-	elapsed := time.Since(startTime)
-	results <- elapsed
+// Worker is a struct that represents a concurrent worker
+type Worker struct {
+	id     int          // worker id
+	url    string       // url to make requests to
+	n      int          // number of requests to make
+	client *http.Client // http client to use
 }
 
+// Result is a struct that holds the result of a request
+type Result struct {
+	workerID int           // worker id
+	status   int           // status code
+	latency  time.Duration // latency
+	err      error         // error if any
+}
+
+// NewWorker creates a new worker with the given parameters
+func NewWorker(id int, url string, n int, client *http.Client) *Worker {
+	return &Worker{id, url, n, client}
+}
+
+// Run runs the worker and sends the results to the given channel
+func (w *Worker) Run(results chan<- Result) {
+	defer func() {
+		// handle panic gracefully
+		if r := recover(); r != nil {
+			fmt.Println("Worker", w.id, "panicked:", r)
+		}
+	}()
+
+	for i := 0; i < w.n; i++ {
+		// make a GET request and measure the latency
+		start := time.Now()
+		resp, err := w.client.Get(w.url)
+		
+		latency := time.Since(start)
+
+		// send the result to the channel
+		result := Result{w.id, 0, latency, err}
+		if err == nil {
+			// close the response body and get the status code
+			defer resp.Body.Close()
+			result.status = resp.StatusCode
+		}
+		results <- result
+	}
+}
+
+// main function
 func main() {
-	// URL to make GET requests to
-	url := "http://localhost:9011/books?bookId=1"
+	// constants
+	const workers = 10                                 // number of workers
+	const requests = 100                               // number of requests per worker
+	const url = "http://localhost:9011/books?bookId=1" // url to make requests to
 
-	// Number of concurrent workers
-	numWorkers := 5
-	//Number of Request per workers
-	RequestPerWorker := numWorkers * 10
+	// create a channel for results
+	results := make(chan Result, workers*requests)
 
-	// Duration for which workers should run
-	// duration := 5 * time.Second
-
-	// Channels to collect results and errors
-	results := make(chan time.Duration, RequestPerWorker)
-	errors := make(chan error, RequestPerWorker)
-
-	// Channel to signal when all workers have completed
-	// done := make(chan struct{}, numWorkers)
-
-	// WaitGroup to wait for all workers to finish
-	var wg sync.WaitGroup
-	wg.Add(numWorkers)
-
-	// Start workers
-	startTime := time.Now()
-	for i := 0; i < numWorkers; i++ {
-		go worker(url, results, errors, RequestPerWorker, &wg)
+	// create a http client with a timeout
+	client := &http.Client{
+		Timeout: 10 * time.Second,
 	}
 
-	// Aggregate metrics
-	var totalResponseTime time.Duration
-	var numRequests int
-	var minLatency, maxLatency time.Duration = time.Hour, 0
-	var errorCount int
+	// create a wait group for workers
+	wg := &sync.WaitGroup{}
+	wg.Add(workers)
 
-	// for time.Since(startTime) < duration {
-	// 	select {
-	// 	case result := <-results:
-	// 		// Handle result (response time) received from results channel
-	// 		totalResponseTime += result
-	// 		if result < minLatency {
-	// 			minLatency = result
-	// 		}
-	// 		if result > maxLatency {
-	// 			maxLatency = result
-	// 		}
-	// 		numRequests++
-	// 		fmt.Printf("Received result: %v\n", result)
-	// 	case err := <-errors:
-	// 		// Handle error received from errors channel
-	// 		errorCount++
-	// 		fmt.Printf("Received error: %v\n", err)
-	// 	}
-	// }
-
-	for result := range results {
-		totalResponseTime += result
-		if result < minLatency {
-			minLatency = result
-		}
-		if result > maxLatency {
-			maxLatency = result
-		}
-		numRequests++
-	}
-	for range errors {
-		errorCount++
+	// create and run workers
+	for i := 0; i < workers; i++ {
+		worker := NewWorker(i, url, requests, client)
+		go func() {
+			worker.Run(results)
+			wg.Done()
+		}()
 	}
 
-	// Wait for all workers to finish
+	// wait for all workers to finish
 	wg.Wait()
-
-	// Close the channels
 	close(results)
-	close(errors)
 
-	avgLatency := totalResponseTime / time.Duration(numRequests)
-	requestsPerSecond := float64(numRequests) / time.Since(startTime).Seconds()
+	// collect metrics
+	var totalRequests, totalErrors, minLatency, maxLatency, sumLatency int64
+	var avgLatency, reqPerSec, errorRate float64
+	minLatency = 1<<63 - 1 // max int64 value
+	startTime := time.Now()
 
-	// Print metrics
-	fmt.Printf("Total Number of Requests %v\n", numRequests)
-	fmt.Printf("Average Latency: %v\n", avgLatency)
-	fmt.Printf("Min Latency: %v\n", minLatency)
-	fmt.Printf("Max Latency: %v\n", maxLatency)
-	fmt.Printf("Requests Per Second: %f\n", requestsPerSecond)
-	fmt.Printf("Error Rate: %.2f%%\n", float64(errorCount)/float64(numRequests)*100)
+	// iterate over the results
+	for result := range results {
+		totalRequests++
+		sumLatency += int64(result.latency)
+		if result.err != nil {
+			totalErrors++
+		}
+		if result.latency < time.Duration(minLatency) {
+			minLatency = int64(result.latency)
+		}
+		if result.latency > time.Duration(maxLatency) {
+			maxLatency = int64(result.latency)
+		}
+	}
+
+	// calculate metrics
+	elapsedTime := time.Since(startTime)
+	avgLatency = float64(sumLatency) / float64(totalRequests)
+	reqPerSec = float64(totalRequests) / elapsedTime.Seconds()
+	errorRate = float64(totalErrors) / float64(totalRequests) * 100
+
+	// print metrics
+	fmt.Println("Total Number of Requests:", totalRequests)
+	fmt.Println("Average Latency:", time.Duration(avgLatency))
+	fmt.Println("Requests Per Second:", reqPerSec)
+	fmt.Println("Min Latency:", time.Duration(minLatency))
+	fmt.Println("Max Latency:", time.Duration(maxLatency))
+	fmt.Println("Error Rate:", errorRate, "%")
 }
